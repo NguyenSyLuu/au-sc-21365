@@ -2,6 +2,20 @@
 
 class Magestore_Auction_IndexController extends Mage_Core_Controller_Front_Action {
 
+    public function testAction() {
+//        $customer_id = 4;
+//        $value = 12;
+//        $customerSession = Mage::getSingleton('customer/session');
+//        $customer = $customerSession->getCustomer();
+//        $customer->setCreditValue($customer->getCreditValue() + $value)->save();
+//        $credit = $customer->getCreditValue();
+        $bonus = Mage::getModel('customercredit/bonuscredit')->load(1);
+        $customer = Mage::getModel('customer/customer')->load(3);
+//        $customer->getCreditBonus();
+        $customer->setCreditBonus($bonus->getBonusCredit())->save();
+        Zend_Debug::dump($bonus->getBonusCredit());
+        Zend_Debug::dump($customer->getCreditBonus());
+    }
     public function indexAction() {
         if (Mage::getStoreConfig('auction/general/bidder_status') != 1) {
             $this->_redirect('', array());
@@ -514,6 +528,15 @@ class Magestore_Auction_IndexController extends Mage_Core_Controller_Front_Actio
             }
 
             try {
+                //start customize AU-SC
+                $credit = $customer->getCreditValue();
+                if($credit < 1){
+                    $result .= $notice->getNoticeError($_helper->__('You not enough credit to bid.'));
+                    $this->getResponse()->setBody($result);
+                    return;
+                }
+                $customer->setCreditValue($customer->getCreditValue() -1)->save();
+                //end customize AU-SC
                 $auctionbid->save();
 
                 $auction->setLastBid($auctionbid);
@@ -603,7 +626,13 @@ class Magestore_Auction_IndexController extends Mage_Core_Controller_Front_Actio
                     $autobid->save();
                     $autobid->emailToBidder();
                     $check = true;
-
+                    //start customize AU-SC
+                    $credit = $customer->getCreditValue();
+                    if($credit < 1){
+                        //$customer->setCreditValue($customer->getCreditValue() -1)->save();
+                    }
+                    $customer->setCreditValue($customer->getCreditValue() -1)->save();
+                    //end customize AU-SC
                     $result .= $notice->getNoticeSuccess($_helper->__('You have placed an auto bid successfully.'));
                     $this->getResponse()->setBody($result);
                 } catch (Exception $e) {

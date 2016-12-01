@@ -25,7 +25,7 @@
 <config>
     <modules>
         <Magestore_Customercredit>
-            <version>0.2.0</version>
+            <version>0.2.2</version>
         </Magestore_Customercredit>
     </modules>
     <frontend>
@@ -181,6 +181,9 @@
                     <typetransaction>
                         <table>type_transaction</table>
                     </typetransaction>
+                    <bonuscredit>
+                        <table>credit_bonus</table>
+                    </bonuscredit>
                 </entities>
             </customercredit_mysql4>
         </models>
@@ -188,6 +191,7 @@
             <customercredit_setup>
                 <setup>
                     <module>Magestore_Customercredit</module>
+                    <class>Mage_Eav_Model_Entity_Setup</class>
                 </setup>
                 <connection>
                     <use>core_setup</use>

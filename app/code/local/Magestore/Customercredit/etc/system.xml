@@ -68,6 +68,15 @@
                             <show_in_store>1</show_in_store>
                             <comment></comment>
                         </enable_send_credit>
+                        <lifetime_bonuscredit translate="label">
+                            <label>Life time bonus credit</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>4</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>(day)</comment>
+                        </lifetime_bonuscredit>
                         <validate translate="label">
                             <label>Verify before sending credit </label>
                             <frontend_type>select</frontend_type>
