@@ -52,4 +52,9 @@ class Magestore_Customercredit_Block_Sumary extends Mage_Core_Block_Template
         return Mage::getModel('customercredit/customercredit')->getCustomerCreditLabel();
     }
 
+    public function getBonusLabel()
+    {
+        return Mage::getModel('customercredit/customercredit')->getCustomerBonusCreditLabel();
+    }
+
 }

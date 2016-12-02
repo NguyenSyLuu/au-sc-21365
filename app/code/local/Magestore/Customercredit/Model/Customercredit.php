@@ -203,6 +203,11 @@ class Magestore_Customercredit_Model_Customercredit extends Mage_Core_Model_Abst
         return Mage::helper('customercredit')->getCustomer()->getCreditValue();
     }
 
+    public function getBaseCustomerBonusCredit()
+    {
+        return Mage::helper('customercredit')->getCustomer()->getCreditBonus();
+    }
+
     /**
      * @return mixed
      */
@@ -223,12 +228,24 @@ class Magestore_Customercredit_Model_Customercredit extends Mage_Core_Model_Abst
         return round($store->convertPrice($customer_credit), 3);
     }
 
+    public function getCustomerBonusCredit()
+    {
+        $store = Mage::app()->getStore();
+        $customer_bonuscredit = $this->getBaseCustomerBonusCredit();
+        return round($store->convertPrice($customer_bonuscredit), 3);
+    }
+
     /**
      * @return mixed
      */
     public function getCustomerCreditLabel()
     {
         return $this->getLabel($this->getCustomerCredit());
+    }
+
+    public function getCustomerBonusCreditLabel()
+    {
+        return $this->getLabel($this->getCustomerBonusCredit());
     }
 
     /**

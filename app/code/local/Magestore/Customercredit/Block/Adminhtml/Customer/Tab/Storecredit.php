@@ -53,6 +53,11 @@ class Magestore_Customercredit_Block_Adminhtml_Customer_Tab_Storecredit extends 
             'title' => Mage::helper('customercredit')->__('Current Credit Balance'),
             'text' => $this->getBalanceCredit(),
         ));
+        $fieldset->addField('credit_bonus', 'note', array(
+            'label' => Mage::helper('customercredit')->__('Bonus Credit Balance'),
+            'title' => Mage::helper('customercredit')->__('Bonus Credit Balance'),
+            'text' => $this->getBalanceBonusCredit(),
+        ));
         $fieldset->addField('credit_value', 'text', array(
             'label' => Mage::helper('customercredit')->__('Add or subtract  a credit value'),
             'title' => Mage::helper('customercredit')->__('Add or subtract  a credit value'),
@@ -137,6 +142,12 @@ class Magestore_Customercredit_Block_Adminhtml_Customer_Tab_Storecredit extends 
     public function getBalanceCredit()
     {
         $customerCredit = $this->getCredit()->getCreditValue();
+        return Mage::helper('core')->currency($customerCredit);
+    }
+
+    public function getBalanceBonusCredit()
+    {
+        $customerCredit = $this->getCredit()->getCreditBonus();
         return Mage::helper('core')->currency($customerCredit);
     }
 

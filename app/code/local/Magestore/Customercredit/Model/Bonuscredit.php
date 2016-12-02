@@ -39,4 +39,39 @@ class Magestore_Customercredit_Model_Bonuscredit extends Mage_Core_Model_Abstrac
         parent::_construct();
         $this->_init('customercredit/bonuscredit');
     }
+
+    public function checkbonuscredit()
+    {
+        $lifeTimeConfig = Mage::helper('customercredit')->getGeneralConfig('lifetime_bonuscredit');
+        $now = time();
+        $lifeTime = $lifeTimeConfig * 24 * 60 * 60;
+        $customerCollection = Mage::getModel("customer/customer")->getCollection();
+        $items = $customerCollection->getItems();
+        $customercredit = Mage::getModel("customercredit/bonuscredit");
+        foreach ($items as $item) {  //$item =  customer
+
+            $customer = Mage::getModel('customer/customer')->load($item->getId());
+            $customerBonusCredit = $customer->getCreditBonus();
+            $credit = $customercredit->getCollection()->addFieldToFilter('customer_id', $item->getId())->addFieldToFilter('status', "1");
+            $subBonus = 0;
+
+            foreach ($credit as $bonus) { //$bonus =  bonus credit
+                $bonusTime = strtotime($bonus->getBonusTime());
+//                $bonusTotal += $bonus->getBonusCredit();
+                if (($now - $bonusTime) < $lifeTime) {
+
+                } else {
+                    $subBonus += $bonus->getBonusCredit();
+                    $bonus->setStatus(0)->save();
+                }
+            }
+            if ($customerBonusCredit > $subBonus) {
+                $customer->setCreditBonus($customerBonusCredit - $subBonus);
+//                $customer->setCreditValue($customerBonusCredit-$subBonus);
+            } else {
+                $customer->setCreditBonus(0);
+            }
+            $customer->save();
+        }
+    }
 }

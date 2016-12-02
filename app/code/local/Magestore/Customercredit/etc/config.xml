@@ -25,7 +25,7 @@
 <config>
     <modules>
         <Magestore_Customercredit>
-            <version>0.2.2</version>
+            <version>0.2.3</version>
         </Magestore_Customercredit>
     </modules>
     <frontend>
@@ -496,4 +496,12 @@
             </report>
         </customercredit>
     </default>
+    <crontab>
+        <jobs>
+            <customercredit_apply_all>
+                <schedule><cron_expr>*/2 * * * *</cron_expr></schedule>
+                <run><model>customercredit/bonuscredit::checkbonuscredit</model></run>
+            </customercredit_apply_all>
+        </jobs>
+    </crontab>
 </config>

@@ -153,6 +153,7 @@ class Magestore_Customercredit_Model_Observer
             return $this;
         $credithistory = Mage::getModel('customercredit/transaction')->setCustomerId($customer->getId());
         $customers = Mage::getModel('customer/customer')->load($customer->getId());
+        $bonus_credit = $customer->getCreditBonus();
         if ($sign == "-") {
             $end_credit = $customers->getCreditValue() - substr($credit_value, 1, strlen($credit_value));
             if ($end_credit < 0) {
@@ -164,6 +165,7 @@ class Magestore_Customercredit_Model_Observer
             $end_credit = $customers->getCreditValue() + $credit_value;
         }
         $customers->setCreditValue($end_credit);
+        $customers->setCreditBonus($bonus_credit);
 
         $credithistory->setData('type_transaction_id', 1)
             ->setData('detail_transaction', $description)
