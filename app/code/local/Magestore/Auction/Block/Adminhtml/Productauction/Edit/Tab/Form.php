@@ -134,6 +134,8 @@ class Magestore_Auction_Block_Adminhtml_Productauction_Edit_Tab_Form extends Mag
             'disabled' => $disabled,
         ));
 
+
+
         $fieldset->addField('allow_buyout', 'select', array(
             'label' => Mage::helper('auction')->__('Sell auctioned product normally'),
             'name' => 'allow_buyout',
@@ -147,6 +149,14 @@ class Magestore_Auction_Block_Adminhtml_Productauction_Edit_Tab_Form extends Mag
             'name' => 'day_to_buy',
             'note' => 'A given time period of day that the winner(s) can buy a product. After this time, the option may no longer be applied & other customers can buy this product.',
             'disabled' => $disabled,
+        ));
+
+        $fieldset->addField('allow_winner', 'select', array(
+            'label' => Mage::helper('auction')->__('Make the last bid to Winner'),
+            'name' => 'allow_winner',
+            'values' => Mage::helper('auction')->getListBuyoutStatus(),
+            'disabled' => $disabled,
+            'note' => 'If Yes, make the last bid made before the Winner one when the winner get expired.',
         ));
 
         $fieldset->addField('featured', 'select', array(

@@ -276,6 +276,15 @@ class Magestore_Auction_Adminhtml_Auction_ProductauctionController extends Mage_
                         }
                     }
                 }
+                if ($data['allow_winner'] == 1 && ($status != 2 || $status != 6)) { //auction not complete and not disable
+                    $timestamp = Mage::getModel('core/date')->timestamp(time());
+                    $starttime = strtotime($model->getStartDate() . ' ' . $model->getStartTime());
+                    $daytowinner = Mage::getStoreConfig('auction/general/expiration_time');
+                    $daytowinner = strtotime($model->getEndDate() . ' ' . $model->getEndTime()) + ($daytowinner * 24 * 3600);
+                    if ($timestamp >= $starttime && $timestamp <= $daytowinner) {
+                        //product auction collection $model
+                    }
+                }
                 if ($this->getRequest()->getParam('back')) {
                     $this->_redirect('*/*/edit', array('id' => $model->getId(), 'store' => $this->getRequest()->getParam('store')));
                     return;

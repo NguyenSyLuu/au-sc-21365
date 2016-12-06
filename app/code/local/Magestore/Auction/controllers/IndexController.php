@@ -4,7 +4,70 @@ class Magestore_Auction_IndexController extends Mage_Core_Controller_Front_Actio
 {
 
     public function testAction()
-    {
+    {$productAuction = Mage::getModel('auction/productauction')->getCollection()
+        ->addFieldToFilter('status', 5);
+        $bidder = Mage::getModel('auction/auction')->getCollection()
+            ->addFieldToFilter('status', array('nin' => 2));
+        $timestamp = Mage::getModel('core/date')->timestamp(time());
+        $daytowinner = Mage::getStoreConfig('auction/general/expiration_time');
+        foreach ($productAuction as $auction) {
+            if ($auction->getStatus() == 5) {
+                if ($timestamp <= $daytowinner) {
+                    //product auction collection $model
+
+                    $bid = $bidder->addFieldToFilter('productauction_id', $auction->getId());
+                    $auctionOldWinner = $bid
+                        ->addFieldToFilter('status', 5)
+                        ->getFirstItem(); //lấy ra old winner
+                    if (count($auctionOldWinner)) {
+                        $oldWinner = $auctionOldWinner->setOrder('auctionbid_id', 'DESC');
+                        $oldWinner->setStatus(4)->save();
+                        Zend_Debug::dump($oldWinner->getData());
+                        $auctionNewWinner = $bid->setOrder('auctionbid_id', 'DESC');
+                        $i = 0;
+                        foreach ($auctionNewWinner as $new) {
+                            if ($i == 1) {
+                                $new->setStatus(5)->save();
+                                Zend_Debug::dump($new->getData());
+                            } else {
+                                $i++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        die();
+        $bid = Mage::getModel('auction/auction');
+        //check complete hay chưa trước
+        $auctionOldWinner = $bid->getCollection()
+            ->addFieldToFilter('productauction_id', 2)
+            ->addFieldToFilter('status', array('nin' => array(2)))
+            ->addFieldToFilter('status', 5)
+            ->getFirstItem(); //lấy ra old winner
+        $oldWinner = $auctionOldWinner->setOrder('auctionbid_id', 'DESC');
+        $oldWinner->setStatus(4)->save();
+        Zend_Debug::dump($oldWinner->getData());
+        $auctionNewWinner = $bid->getCollection()
+            ->addFieldToFilter('productauction_id', 2)
+            ->addFieldToFilter('status', array('nin' => 2))
+            ->setOrder('auctionbid_id','DESC');
+//            ->getFirstItem(); //loai bo bid bi disable và winner
+        $i = 0;
+        foreach($auctionNewWinner as $new){
+            if($i == 1){
+                $new->setStatus(5)->save();
+                \Zend_Debug::dump($new->getData());die();
+            }else{
+                $i++;
+            }
+        }
+//        $newWinner = $auctionNewWinner->getData();
+//        $newWinner[1]['status'] = 5;
+////        $auctionNewWinner->save();
+//        $bid->save();
+//        Zend_Debug::dump($newWinner[1]);
+        die();
 //        $customer_id = 4;
 //        $value = 12;
 //        $customerSession = Mage::getSingleton('customer/session');

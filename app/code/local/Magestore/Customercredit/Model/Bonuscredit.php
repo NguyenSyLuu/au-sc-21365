@@ -42,6 +42,8 @@ class Magestore_Customercredit_Model_Bonuscredit extends Mage_Core_Model_Abstrac
 
     public function checkbonuscredit()
     {
+        Mage::log("WORKS!");
+        /*
         $lifeTimeConfig = Mage::helper('customercredit')->getGeneralConfig('lifetime_bonuscredit');
         $now = time();
         $lifeTime = $lifeTimeConfig * 24 * 60 * 60;
@@ -73,5 +75,6 @@ class Magestore_Customercredit_Model_Bonuscredit extends Mage_Core_Model_Abstrac
             }
             $customer->save();
         }
+        */
     }
 }

@@ -28,6 +28,18 @@
             <version>0.2.3</version>
         </Magestore_Customercredit>
     </modules>
+    <crontab>
+        <jobs>
+            <customercredit>
+                <schedule>
+                    <cron_expr>*/2 * * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>customercredit/bonuscredit::checkbonuscredit</model>
+                </run>
+            </customercredit>
+        </jobs>
+    </crontab>
     <frontend>
         <routers>
             <customercredit>
@@ -496,12 +508,5 @@
             </report>
         </customercredit>
     </default>
-    <crontab>
-        <jobs>
-            <customercredit_apply_all>
-                <schedule><cron_expr>*/2 * * * *</cron_expr></schedule>
-                <run><model>customercredit/bonuscredit::checkbonuscredit</model></run>
-            </customercredit_apply_all>
-        </jobs>
-    </crontab>
+
 </config>
