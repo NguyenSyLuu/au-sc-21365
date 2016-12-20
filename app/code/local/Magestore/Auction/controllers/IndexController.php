@@ -4,38 +4,79 @@ class Magestore_Auction_IndexController extends Mage_Core_Controller_Front_Actio
 {
 
     public function testAction()
-    {$productAuction = Mage::getModel('auction/productauction')->getCollection()
+    {
+        $customerSession = Mage::getSingleton('customer/session');
+        $groupId = $customerSession->getCustomer()->getGroupId();
+        die($groupId);
+//        $auctionNewWinner = Mage::getModel('auction/auction')->getCollection()
+//            ->addFieldToFilter('status', array('nin' => 2))
+//            ->addFieldToFilter('productauction_id', 1)
+//            ->setOrder('auctionbid_id', 'DESC');
+//        Zend_Debug::dump("count = ".count($auctionNewWinner));
+//        Zend_Debug::dump($auctionNewWinner->getData());
+//        $productAuction = Mage::getModel('auction/productauction')->load(1)->getData('winnerbids');
+//        Zend_Debug::dump($productAuction);
+//        DIE();
+
+        $productAuction = Mage::getModel('auction/productauction')->getCollection()
         ->addFieldToFilter('status', 5);
         $bidder = Mage::getModel('auction/auction')->getCollection()
             ->addFieldToFilter('status', array('nin' => 2));
         $timestamp = Mage::getModel('core/date')->timestamp(time());
-        $daytowinner = Mage::getStoreConfig('auction/general/expiration_time');
-        foreach ($productAuction as $auction) {
-            if ($auction->getStatus() == 5) {
-                if ($timestamp <= $daytowinner) {
-                    //product auction collection $model
+        Zend_Debug::dump($timestamp);
+        $configDay = Mage::getStoreConfig('auction/general/expiration_time');
 
-                    $bid = $bidder->addFieldToFilter('productauction_id', $auction->getId());
-                    $auctionOldWinner = $bid
-                        ->addFieldToFilter('status', 5)
-                        ->getFirstItem(); //lấy ra old winner
-                    if (count($auctionOldWinner)) {
-                        $oldWinner = $auctionOldWinner->setOrder('auctionbid_id', 'DESC');
-                        $oldWinner->setStatus(4)->save();
-                        Zend_Debug::dump($oldWinner->getData());
-                        $auctionNewWinner = $bid->setOrder('auctionbid_id', 'DESC');
-                        $i = 0;
-                        foreach ($auctionNewWinner as $new) {
-                            if ($i == 1) {
-                                $new->setStatus(5)->save();
-                                Zend_Debug::dump($new->getData());
-                            } else {
-                                $i++;
+        Zend_Debug::dump($configDay);
+        Zend_Debug::dump("---product foreach--------");
+        foreach ($productAuction as $auction) {
+            Zend_Debug::dump("auction id");
+            Zend_Debug::dump($auction->getId());
+            if ($auction->getStatus() == 5) {
+                Zend_Debug::dump("auction = 5");
+                $daytowinner = strtotime($auction->getEndDate() . ' ' . $auction->getEndTime()) + ($configDay * 24 * 3600);
+                Zend_Debug::dump($daytowinner);
+                if (1) {// if ($timestamp <= $daytowinner) {
+                    Zend_Debug::dump("timestamp <= daytowinner");
+                    //product auction collection $model
+                    $bid = Mage::getModel('auction/auction')->getCollection()
+                        ->addFieldToFilter('status', array('nin' => 2))
+                        ->addFieldToFilter('productauction_id', $auction->getId());
+                    $bidderOldWin = $bid
+                        ->addFieldToFilter('status', 5);
+                        //->getFirstItem(); //lấy ra old winner
+                    Zend_Debug::dump("count = ".count($bid));
+                    if (count($bidderOldWin)) {
+                        foreach($bidderOldWin as $auctionOldWinner){
+                            $oldWinner = $auctionOldWinner->setOrder('auctionbid_id', 'DESC');
+                            $oldWinner->setStatus(4)->save();
+
+                            Zend_Debug::dump("old winner");
+                            Zend_Debug::dump($oldWinner->getId());
+                            $auctionNewWinner = Mage::getModel('auction/auction')->getCollection()
+                                ->addFieldToFilter('status', array('nin' => 2))
+                                ->addFieldToFilter('productauction_id', $auction->getId())
+                                ->setOrder('auctionbid_id', 'DESC');
+                            $i = 0;
+                            foreach ($auctionNewWinner as $new) {
+                                Zend_Debug::dump("i = ".$i);
+                                if ($i == 0) {
+                                    Zend_Debug::dump("new wineer status = ".$new->getId());
+                                    $new->setStatus(5)->save();
+                                    Mage::helper('auction/email')->sendAuctionCompleteEmail($auction);
+                                    $i++;
+                                    Zend_Debug::dump("new winner:");
+                                    Zend_Debug::dump($new->getId());
+                                } else {
+                                    $i++;
+                                }
+                                Zend_Debug::dump("cccccc = ".count($auctionNewWinner));
                             }
                         }
+
                     }
                 }
             }
+            Zend_Debug::dump("--------------------------------");
         }
         die();
         $bid = Mage::getModel('auction/auction');
@@ -647,13 +688,75 @@ class Magestore_Auction_IndexController extends Mage_Core_Controller_Front_Actio
 
             try {
                 //start customize AU-SC
-                $credit = $customer->getCreditValue();
-                if ($credit < 1) {
-                    $result .= $notice->getNoticeError($_helper->__('You not enough credit to bid.'));
-                    $this->getResponse()->setBody($result);
-                    return;
+
+                $typeCreditUse = $auction->getTypeCreditUse();
+                $credithistory = Mage::getModel('customercredit/transaction')->setCustomerId($customer->getId());
+                $vipCredit = $customer->getCreditValue();
+                if($typeCreditUse == 1){
+                    $credit = $customer->getCreditValue();
+                    if ($credit < 1) {
+                        $result .= $notice->getNoticeError($_helper->__('You not enough credit to bid.'));
+                        $this->getResponse()->setBody($result);
+                        return;
+                    }
+                    $customer->setCreditValue($customer->getCreditValue() - 1)->save();
+                    $description = "Bid auction ";
+                    $credit_value = -1;
+                    $customer_group = $customer->getGroupId();
+                    $credithistory->setData('type_transaction_id', 11)
+                        ->setData('detail_transaction', $description)
+                        ->setData('amount_credit', $credit_value)
+                        ->setData('end_balance', $customer->getCreditValue())
+                        ->setData('transaction_time', now())
+                        ->setData('customer_group_ids', $customer_group);
+                    try {
+                        $credithistory->save();
+                    } catch (Mage_Core_Exception $e) {
+                        Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+                    }
+                }else{
+                    $creditBonus = $customer->getBonusCredit();
+                    if($creditBonus > 0){
+                        $customer->setBonusCredit($creditBonus - 1)->save();
+                        $description = "Bonus credit";
+                        $credit_value = -1;
+                        $customer_group = $customer->getGroupId();
+                        $credithistory->setData('type_transaction_id', 11)
+                            ->setData('detail_transaction', $description)
+                            ->setData('amount_credit', $credit_value)
+                            ->setData('end_balance', $customer->getBonusCredit())
+                            ->setData('transaction_time', now())
+                            ->setData('customer_group_ids', $customer_group);
+                        try {
+                            $credithistory->save();
+                        } catch (Mage_Core_Exception $e) {
+                            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+                        }
+                    }else{
+                        if($vipCredit > 0) {
+                            $customer->setCreditValue($vipCredit - 1)->save();
+                            $description = "";
+                            $credit_value = -1;
+                            $customer_group = $customer->getGroupId();
+                            $credithistory->setData('type_transaction_id', 11)
+                                ->setData('detail_transaction', $description)
+                                ->setData('amount_credit', $credit_value)
+                                ->setData('end_balance', $customer->getCreditValue())
+                                ->setData('transaction_time', now())
+                                ->setData('customer_group_ids', $customer_group);
+                            try {
+                                $credithistory->save();
+                            } catch (Mage_Core_Exception $e) {
+                                Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+                            }
+                        }else{
+                            $result .= $notice->getNoticeError($_helper->__('You not enough credit to bid.'));
+                            $this->getResponse()->setBody($result);
+                            return;
+                        }
+                    }
                 }
-                $customer->setCreditValue($customer->getCreditValue() - 1)->save();
+
                 //end customize AU-SC
                 $auctionbid->save();
 
@@ -744,11 +847,74 @@ class Magestore_Auction_IndexController extends Mage_Core_Controller_Front_Actio
                     $autobid->emailToBidder();
                     $check = true;
                     //start customize AU-SC
-                    $credit = $customer->getCreditValue();
-                    if ($credit < 1) {
-                        //$customer->setCreditValue($customer->getCreditValue() -1)->save();
+                    $typeCreditUse = $auction->getTypeCreditUse();
+                    $credithistory = Mage::getModel('customercredit/transaction')->setCustomerId($customer->getId());
+                    $vipCredit = $customer->getCreditValue();
+                    if($typeCreditUse == 1){
+                        $credit = $customer->getCreditValue();
+                        if ($credit < 1) {
+                            $result .= $notice->getNoticeError($_helper->__('You not enough credit to bid.'));
+                            $this->getResponse()->setBody($result);
+                            return;
+                        }
+                        $customer->setCreditValue($customer->getCreditValue() - 1)->save();
+                        $description = "Bid auction ";
+                        $credit_value = -1;
+                        $customer_group = $customer->getGroupId();
+                        $credithistory->setData('type_transaction_id', 11)
+                            ->setData('detail_transaction', $description)
+                            ->setData('amount_credit', $credit_value)
+                            ->setData('end_balance', $customer->getCreditValue())
+                            ->setData('transaction_time', now())
+                            ->setData('customer_group_ids', $customer_group);
+                        try {
+                            $credithistory->save();
+                        } catch (Mage_Core_Exception $e) {
+                            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+                        }
+                    }else{
+                        $creditBonus = $customer->getBonusCredit();
+                        if($creditBonus > 0){
+                            $customer->setBonusCredit($creditBonus - 1)->save();
+                            $description = "Bonus credit";
+                            $credit_value = -1;
+                            $customer_group = $customer->getGroupId();
+                            $credithistory->setData('type_transaction_id', 11)
+                                ->setData('detail_transaction', $description)
+                                ->setData('amount_credit', $credit_value)
+                                ->setData('end_balance', $customer->getBonusCredit())
+                                ->setData('transaction_time', now())
+                                ->setData('customer_group_ids', $customer_group);
+                            try {
+                                $credithistory->save();
+                            } catch (Mage_Core_Exception $e) {
+                                Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+                            }
+                        }else{
+                            if($vipCredit > 0){
+                            $customer->setCreditValue($vipCredit - 1)->save();
+                            $description = "";
+                            $credit_value = -1;
+                            $customer_group = $customer->getGroupId();
+                            $credithistory->setData('type_transaction_id', 11)
+                                ->setData('detail_transaction', $description)
+                                ->setData('amount_credit', $credit_value)
+                                ->setData('end_balance', $customer->getCreditValue())
+                                ->setData('transaction_time', now())
+                                ->setData('customer_group_ids', $customer_group);
+                            try {
+                                $credithistory->save();
+                            } catch (Mage_Core_Exception $e) {
+                                Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+                            }
+                            }else{
+                                $result .= $notice->getNoticeError($_helper->__('You not enough credit to bid.'));
+                                $this->getResponse()->setBody($result);
+                                return;
+                            }
+                        }
                     }
-                    $customer->setCreditValue($customer->getCreditValue() - 1)->save();
+
                     //end customize AU-SC
                     $result .= $notice->getNoticeSuccess($_helper->__('You have placed an auto bid successfully.'));
                     $this->getResponse()->setBody($result);

@@ -15,7 +15,16 @@ class Magestore_Auction_Helper_Email extends Mage_Core_Helper_Abstract {
         $auction->emailNoticeCompletedToWatcher();
         $this->noticeOutBid($auction);
     }
-
+//start add customize AU-SC
+    public function sendAuctionOldWinnerEmail($auction) {
+        $oldWinnerBids = $auction->getOldWinnerBids();
+        if (count($oldWinnerBids))
+            foreach ($oldWinnerBids as $oldwinnerBid) {
+                $oldwinnerBid->emailToOldWinner();
+            }
+//        $this->noticeOutBid($auction);
+    }
+//end add customize AU-SC
     public function noticeOutBid($auction) {
         if (!Mage::registry('notice_outbid')) {
             Mage::register('notice_outbid', '1');

@@ -8,6 +8,7 @@ class Magestore_Auction_Model_Auction extends Mage_Core_Model_Abstract {
     const XML_PATH_NEW_BID_TO_WATCHER = "auction/emails/newbid_to_watcher_email_template";
     const XML_PATH_NEW_BID_TO_ADMIN = "auction/emails/newbid_to_admin_email_template";
     const XML_PATH_NOTICE_WINNER = "auction/emails/notice_winner_email_template";
+    const XML_PATH_NOTICE_OLDWINNER = "auction/emails/notice_oldwinner_email_template";
     const XML_PATH_NOTICE_CANCELED = "auction/emails/notice_cancel_bid_email_template";
     const XML_PATH_NOTICE_HIGHEST = "auction/emails/notice_highest_bid_email_template";
     const XML_PATH_NOTICE_OVERBID = "auction/emails/overbid_to_bidder_email_template";
@@ -245,6 +246,36 @@ class Magestore_Auction_Model_Auction extends Mage_Core_Model_Abstract {
             return $this;
         }
     }
+//    start customize AU_SC
+    public function emailToOldWinner() {
+            $storeID = $this->getStoreId();
+            $translate = Mage::getSingleton('core/translate');
+            $translate->setTranslateInline(false);
+
+            $template = Mage::getStoreConfig(self::XML_PATH_NOTICE_OLDWINNER, $storeID);
+
+            $sendTo = array(
+                array(
+                    'name' => $this->getBidderName(),
+                    'email' => $this->getCustomerEmail(),
+                )
+            );
+
+            $mailTemplate = Mage::getModel('core/email_template');
+
+            foreach ($sendTo as $recipient) {
+                $mailTemplate->setDesignConfig(array('area' => 'frontend', 'store' => $storeID))
+                    ->sendTransactional(
+                        $template, Mage::getStoreConfig(self::XML_PATH_SALES_EMAIL_IDENTITY, $storeID), $recipient['email'], $recipient['name'], array(
+                            'bid' => $this
+                        )
+                    );
+            }
+
+            $translate->setTranslateInline(true);
+            return $this;
+    }
+//    end customize AU_SC
 
     public function noticeCanceled() {
         $cusId = $this->getCustomerId();

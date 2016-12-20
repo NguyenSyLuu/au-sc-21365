@@ -3,37 +3,46 @@
 class Magestore_Auction_Model_Event
 {
 
-    public function testcronjob()
+    public function checknewwinner()
     {
         $productAuction = Mage::getModel('auction/productauction')->getCollection()
             ->addFieldToFilter('status', 5);
         $bidder = Mage::getModel('auction/auction')->getCollection()
             ->addFieldToFilter('status', array('nin' => 2));
         $timestamp = Mage::getModel('core/date')->timestamp(time());
-        $daytowinner = Mage::getStoreConfig('auction/general/expiration_time');
+        $configDay = Mage::getStoreConfig('auction/general/expiration_time');
+
         foreach ($productAuction as $auction) {
             if ($auction->getStatus() == 5) {
+                $daytowinner = strtotime($auction->getEndDate() . ' ' . $auction->getEndTime()) + ($configDay * 24 * 3600);
                 if ($timestamp <= $daytowinner) {
                     //product auction collection $model
-
-                    $bid = $bidder->addFieldToFilter('productauction_id', $auction->getId());
-                    $auctionOldWinner = $bid
-                        ->addFieldToFilter('status', 5)
-                        ->getFirstItem(); //lấy ra old winner
-                    if (count($auctionOldWinner)) {
-                        $oldWinner = $auctionOldWinner->setOrder('auctionbid_id', 'DESC');
-                        $oldWinner->setStatus(4)->save();
-                        Zend_Debug::dump($oldWinner->getData());
-                        $auctionNewWinner = $bid->setOrder('auctionbid_id', 'DESC');
-                        $i = 0;
-                        foreach ($auctionNewWinner as $new) {
-                            if ($i == 1) {
-                                $new->setStatus(5)->save();
-                                \Zend_Debug::dump($new->getData());
-                            } else {
-                                $i++;
+                    $bid = Mage::getModel('auction/auction')->getCollection()
+                        ->addFieldToFilter('status', array('nin' => 2))
+                        ->addFieldToFilter('productauction_id', $auction->getId());
+                    $bidderOldWin = $bid
+                        ->addFieldToFilter('status', 5);
+                    if (count($bidderOldWin)) {
+                        foreach($bidderOldWin as $auctionOldWinner){
+                            $oldWinner = $auctionOldWinner->setOrder('auctionbid_id', 'DESC');
+                            $oldWinner->setStatus(7)->save();
+                            Mage::helper('auction/email')->sendAuctionOldWinnerEmail($auction);
+                            $auctionNewWinner = Mage::getModel('auction/auction')->getCollection()
+                                ->addFieldToFilter('status', array('nin' => 2))
+                                ->addFieldToFilter('productauction_id', $auction->getId())
+                                ->setOrder('auctionbid_id', 'DESC');
+                            $i = 0;
+                            foreach ($auctionNewWinner as $new) {
+                                if ($i == 0) {
+                                    $new->setStatus(5)->save();
+                                    Mage::helper('auction/email')->sendAuctionCompleteEmail($auction);
+                                    $i++;
+                                } else {
+                                    $i++;
+                                }
                             }
                         }
+
                     }
                 }
             }

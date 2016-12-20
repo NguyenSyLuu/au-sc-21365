@@ -133,12 +133,19 @@ class Magestore_Auction_Model_Productauction extends Mage_Core_Model_Abstract {
     }
 
     public function getWinnerBids() {
-        if (!$this->getData('winnerbids')) {
+//        if (!$this->getData('winnerbids')) {
             $winnerBids = Mage::helper('auction')->getWinnerBids($this->getId());
             $this->setData('winnerbids', $winnerBids);
-        }
+//        }
 
         return $this->getData('winnerbids');
+    }
+
+    public function getOldWinnerBids() {
+        $oldWinnerBids = Mage::helper('auction')->getOldWinnerBids($this->getId());
+        $this->setData('oldwinnerbids', $oldWinnerBids);
+
+        return $this->getData('oldwinnerbids');
     }
 
     public function getWinnerEmailList() {

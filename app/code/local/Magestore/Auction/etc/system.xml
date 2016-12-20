@@ -289,7 +289,16 @@
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                        </notice_winner_email_template>			
+                        </notice_winner_email_template>
+                        <notice_oldwinner_email_template translate="label">
+                            <label>He become loser bidder at an auction</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>auction/system_template_noticeoldwinner</source_model>
+                            <sort_order>131</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </notice_oldwinner_email_template>
                         <notice_failder_email_template translate="label">
                             <label>He is not the winning bidder at an auction</label>
                             <frontend_type>select</frontend_type>

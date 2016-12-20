@@ -179,6 +179,12 @@ class Magestore_Auction_Helper_Data extends Mage_Core_Helper_Abstract {
         );
     }
 
+    public function getListTypeCredit() {
+        return array(1 => $this->__('VIP Credit'),
+            2 => $this->__('Bonus Credit'),
+        );
+    }
+
     public function getListFeaturedStatus() {
         return array(1 => $this->__('Yes'),
             2 => $this->__('No'),
@@ -297,10 +303,21 @@ class Magestore_Auction_Helper_Data extends Mage_Core_Helper_Abstract {
 
         $winnerBids = Mage::getModel('auction/auction')->getCollection()
                 ->addFieldToFilter('productauction_id', $auction_id)
-                ->addFieldToFilter('status', 5)
+                ->addFieldToFilter('status', 4)
                 ->setOrder('auctionbid_id', 'DESC');
-
         return $winnerBids;
+    }
+
+    public function getOldWinnerBids($auction_id) {
+        if ($this->getAuctionStatus($auction_id) != 5) //not end
+            return null;
+
+        $oldWinnerBids = Mage::getModel('auction/auction')->getCollection()
+            ->addFieldToFilter('productauction_id', $auction_id)
+            ->addFieldToFilter('status', 7)
+            ->setOrder('auctionbid_id', 'DESC');
+//            ->getFirstItem();
+        return $oldWinnerBids;
     }
 
     public function getAuctionTimeLeft($auction_id) {

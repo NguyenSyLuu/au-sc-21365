@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Magestore_Auction>
-            <version>2.2.1</version>
+            <version>2.2.2</version>
         </Magestore_Auction>
     </modules>
     <frontend>
@@ -265,7 +265,14 @@
                     <label>Notice to winner</label>
                     <file>auction/notice_winner.html</file>
                     <type>html</type>
-                </magestore_auction_notice_towinner>	
+                </magestore_auction_notice_towinner>
+                <!--start customize AU-SC-->
+                <magestore_auction_notice_tooldwinner translate="label" module="auction">
+                    <label>Notice to Old winner</label>
+                    <file>auction/notice_oldwinner.html</file>
+                    <type>html</type>
+                </magestore_auction_notice_tooldwinner>
+                <!--end customize AU-SC-->
                 <magestore_auction_notice_tofailder translate="label" module="auction">
                     <label>Notice out of bid</label>
                     <file>auction/notice_failder.html</file>
@@ -340,6 +347,7 @@
                 <overbid_to_bidder_email_template>magestore_auction_over_bid_tobidder</overbid_to_bidder_email_template>
                 <overautobid_to_bidder_email_template>magestore_auction_over_autobid_tobidder</overautobid_to_bidder_email_template>				
                 <notice_winner_email_template>magestore_auction_notice_towinner</notice_winner_email_template>
+                <notice_oldwinner_email_template>magestore_auction_notice_tooldwinner</notice_oldwinner_email_template>
                 <notice_failder_email_template>magestore_auction_notice_tofailder</notice_failder_email_template>
                 <notice_auction_completed>magestore_auction_completed_admin</notice_auction_completed>				
                 <notice_auction_completed_towatcher>magestore_auction_completed_watcher</notice_auction_completed_towatcher>
@@ -360,10 +368,10 @@
             </auction_autobid>
             <auction_customize>
                 <schedule>
-                    <cron_expr>* * * * *</cron_expr>
+                    <cron_expr>* 5 * * *</cron_expr>
                 </schedule>
                 <run>
-                    <model>auction/event::testcronjob</model>
+                    <model>auction/event::checknewwinner</model>
                 </run>
             </auction_customize>
         </jobs>

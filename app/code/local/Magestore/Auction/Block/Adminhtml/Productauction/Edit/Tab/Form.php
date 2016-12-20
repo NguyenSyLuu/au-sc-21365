@@ -134,7 +134,13 @@ class Magestore_Auction_Block_Adminhtml_Productauction_Edit_Tab_Form extends Mag
             'disabled' => $disabled,
         ));
 
-
+        $fieldset->addField('type_credit_use', 'select', array(
+            'label' => Mage::helper('auction')->__('Type Credit to be spended'),
+            'name' => 'type_credit_use',
+            'values' => Mage::helper('auction')->getListTypeCredit(),
+            'disabled' => $disabled,
+            'note' => 'Kind of credit accepted to be spended.',
+        ));
 
         $fieldset->addField('allow_buyout', 'select', array(
             'label' => Mage::helper('auction')->__('Sell auctioned product normally'),
