@@ -142,55 +142,95 @@ class Magestore_Customercredit_Model_Observer
         if (!$customer->getId())
             return $this;
         $credit_value = Mage::app()->getRequest()->getPost('credit_value');
+        $bonus_credit_value = Mage::app()->getRequest()->getPost('bonus_credit_value');
         if (strpos($credit_value, ',') !== false) {
             $credit_value = str_replace(',', '.', $credit_value);
+        }
+        if (strpos($bonus_credit_value, ',') !== false) {
+            $bonus_credit_value = str_replace(',', '.', $bonus_credit_value);
         }
         $description = Mage::app()->getRequest()->getPost('description');
         $group = Mage::app()->getRequest()->getPost('account');
         $customer_group = $group['group_id'];
         $sign = substr($credit_value, 0, 1);
-        if (!$credit_value)
+        $sign_bonus = substr($bonus_credit_value, 0, 1);
+        if (!$credit_value && !$bonus_credit_value)
             return $this;
-        $credithistory = Mage::getModel('customercredit/transaction')->setCustomerId($customer->getId());
-        $customers = Mage::getModel('customer/customer')->load($customer->getId());
-        $bonus_credit = $customer->getCreditBonus();
-        if ($sign == "-") {
-            $end_credit = $customers->getCreditValue() - substr($credit_value, 1, strlen($credit_value));
-            if ($end_credit < 0) {
-                $end_credit = 0;
-                $credit_value = -$customers->getCreditValue();
+        if ($credit_value) {
+            $credithistory = Mage::getModel('customercredit/transaction')->setCustomerId($customer->getId());
+            $customers = Mage::getModel('customer/customer')->load($customer->getId());
+            if ($sign == "-") {
+                $end_credit = $customers->getCreditValue() - substr($credit_value, 1, strlen($credit_value));
+                if ($end_credit < 0) {
+                    $end_credit = 0;
+                    $credit_value = -$customers->getCreditValue();
+                }
+            } else {
+                $credithistory->setData('received_credit', $credit_value);
+                $end_credit = $customers->getCreditValue() + $credit_value;
             }
-        } else {
-            $credithistory->setData('received_credit', $credit_value);
-            $end_credit = $customers->getCreditValue() + $credit_value;
-        }
-        $customers->setCreditValue($end_credit);
-        $customers->setCreditBonus($bonus_credit);
+            $customers->setCreditValue($end_credit);
 
-        $credithistory->setData('type_transaction_id', 1)
-            ->setData('detail_transaction', $description)
-            ->setData('amount_credit', $credit_value)
-            ->setData('end_balance', $customers->getCreditValue())
-            ->setData('transaction_time', now())
-            ->setData('customer_group_ids', $customer_group);
-        try {
-            $customers->save();
-        } catch (Mage_Core_Exception $e) {
-            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
-        }
-        try {
-            $credithistory->save();
-        } catch (Mage_Core_Exception $e) {
+            $credithistory->setData('type_transaction_id', 1)
+                ->setData('detail_transaction', $description)
+                ->setData('amount_credit', $credit_value)
+                ->setData('end_balance', $customers->getCreditValue())
+                ->setData('transaction_time', now())
+                ->setData('customer_group_ids', $customer_group);
+            try {
+                $customers->save();
+            } catch (Mage_Core_Exception $e) {
+                Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+            }
+            try {
+                $credithistory->save();
+            } catch (Mage_Core_Exception $e) {
 
-            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+                Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+            }
+        }
+        if ($bonus_credit_value) {
+            $credithistory = Mage::getModel('customercredit/transaction')->setCustomerId($customer->getId());
+            $customers = Mage::getModel('customer/customer')->load($customer->getId());
+            if ($sign == "-") {
+                $end_bonus_credit = $customers->getCreditBonus() - substr($bonus_credit_value, 1, strlen($bonus_credit_value));
+                if ($end_bonus_credit < 0) {
+                    $end_bonus_credit = 0;
+                    $bonus_credit_value = -$customers->getCreditBonus();
+                }
+            } else {
+                $credithistory->setData('received_credit', $bonus_credit_value);
+                $end_bonus_credit = $customers->getCreditBonus() + $bonus_credit_value;
+            }
+            $customers->setCreditBonus($end_bonus_credit);
+
+            $credithistory->setData('type_transaction_id', 1)
+                ->setData('detail_transaction', $description)
+                ->setData('amount_credit', $bonus_credit_value)
+                ->setData('end_balance', $customers->getCreditBonus())
+                ->setData('transaction_time', now())
+                ->setData('detail_transaction', "Bonus credit")
+                ->setData('customer_group_ids', $customer_group);
+            try {
+                $customers->save();
+            } catch (Mage_Core_Exception $e) {
+                Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+            }
+            try {
+                $credithistory->save();
+            } catch (Mage_Core_Exception $e) {
+
+                Mage::getSingleton('adminhtml/session')->addError(Mage::helper('customercredit')->__($e->getMessage()));
+            }
         }
         $sendemail = Mage::app()->getRequest()->getPost('send_mail');
         if ($sendemail == 1) {
             $email = $customer->getEmail();
             $name = $customer->getLastname();
             $balance = $customers->getCreditValue();
+            $bonus_balance = $customers->getCreditValue();
             $message = Mage::app()->getRequest()->getPost('description');
-            Mage::getModel('customercredit/customercredit')->sendNotifytoCustomer($email, $name, $credit_value, $balance, $message);
+            Mage::getModel('customercredit/customercredit')->sendNotifytoCustomer($email, $name, $credit_value, $bonus_credit_value, $balance, $bonus_balance, $message);
         }
         return $this;
     }
@@ -275,6 +315,7 @@ class Magestore_Customercredit_Model_Observer
         $customer_name = $order->getCustomerName();
         $customer_email = $order->getCustomerEmail();
         $product_credit_value = 0;
+        $product_bonus_credit_value = 0;
 
         //check if invoice store credit product - Marko
         foreach ($invoice->getAllItems() as $item) {
@@ -319,7 +360,13 @@ class Magestore_Customercredit_Model_Observer
                         Mage::getModel('customercredit/customercredit')->sendSuccessEmail($customer_email, $customer_name, $email, true);
                     } else {
                         //total credit value invoice - Marko
-                        $product_credit_value += ((float)$buyRequest['amount']) * ((float)$item->getQty());
+                        $sku = $item->getSku();
+                        if(Mage::helper('customercredit')->isBonusCredit($sku)){
+                            $product_bonus_credit_value += ((float)$buyRequest['amount']) * ((float)$item->getQty());
+                        }else{
+                            $product_credit_value += ((float)$buyRequest['amount']) * ((float)$item->getQty());
+                        }
+
                     }
                 }
             }
@@ -331,6 +378,12 @@ class Magestore_Customercredit_Model_Observer
                 ->addTransactionHistory($order->getCustomerId(), Magestore_Customercredit_Model_TransactionType::TYPE_BUY_CREDIT, "buy credit " . $product_credit_value . " from store ", $order->getId(), $product_credit_value);
             Mage::getModel('customercredit/customercredit')
                 ->addCreditToFriend($product_credit_value, $customer_id);
+        }
+        if ($product_bonus_credit_value > 0) {
+            Mage::getModel('customercredit/transaction')
+                ->addTransactionHistory($order->getCustomerId(), Magestore_Customercredit_Model_TransactionType::TYPE_BUY_CREDIT, "buy bonus credit " . $product_credit_value . " from store ", $order->getId(), $product_bonus_credit_value);
+            Mage::getModel('customercredit/customercredit')
+                ->addBonusCreditToFriend($product_credit_value, $customer_id);
         }
     }
 

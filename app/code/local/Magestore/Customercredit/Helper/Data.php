@@ -35,6 +35,20 @@ class Magestore_Customercredit_Helper_Data extends Mage_Core_Helper_Data
 {
 
     /**
+     * @param $sku
+     * @return mixed
+     */
+    public function isBonusCredit($sku)
+    {
+        $prefix = substr($sku, 0, 5);
+        if($prefix == "bonus"){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    /**
      * @param null $store
      * @return mixed
      */

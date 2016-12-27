@@ -64,6 +64,14 @@ class Magestore_Customercredit_Block_Adminhtml_Customer_Tab_Storecredit extends 
             'name' => 'credit_value',
             'note' => Mage::helper('customercredit')->__('You can add or subtract an amount from customer’s balance by entering a number. For example, enter “99” to add $99 and “-99” to subtract $99'),
         ));
+
+        $fieldset->addField('bonus_credit_value', 'text', array(
+            'label' => Mage::helper('customercredit')->__('Add or subtract  a bonus credit value'),
+            'title' => Mage::helper('customercredit')->__('Add or subtract  a bonus credit value'),
+            'name' => 'bonus_credit_value',
+            'note' => Mage::helper('customercredit')->__('You can add or subtract an amount from customer’s balance by entering a number. For example, enter “99” to add $99 and “-99” to subtract $99'),
+        ));
+
         $fieldset->addField('description', 'textarea', array(
             'label' => Mage::helper('customercredit')->__('Comment'),
             'title' => Mage::helper('customercredit')->__('Comment'),

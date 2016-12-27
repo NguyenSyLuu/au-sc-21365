@@ -52,7 +52,9 @@ pre{ white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; 
                                 Number of credit deducted:
                                 {{/if}}
                                 <b>{{var value}}</b><br/>
+                                <b>{{var bonus_value}}</b><br/>
                                 Your current credit balance: <b>{{var balance}}</b></p>
+                                Your current bonus credit balance: <b>{{var bonus_balance}}</b></p>
                             {{if addcredit}}
                             You can use the credits to check out or send to your friends at <b><a href="{{var storeurl}}">{{var store.getFrontendName()}}</a></b>.<br/>
                             {{/if}}

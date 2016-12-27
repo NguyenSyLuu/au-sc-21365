@@ -107,6 +107,25 @@ class Magestore_Customercredit_Model_Customercredit extends Mage_Core_Model_Abst
 
     /**
      * @param $credit_amount
+     * @param $customer_id
+     * @return string
+     */
+    public function addBonusCreditToFriend($credit_amount, $customer_id)
+    {
+        $friend_account = Mage::getModel('customer/customer')->load($customer_id);
+        if (isset($friend_account)) {
+            $friend_credit_balance = $friend_account->getCreditBonus() + $credit_amount;
+            $friend_account->setCreditBonus($friend_credit_balance);
+            try {
+                $friend_account->save();
+            } catch (Exception $e) {
+                return $e->getMessage();
+            }
+        }
+    }
+
+    /**
+     * @param $credit_amount
      * @param $friend_email
      * @param $message
      * @param $customerId
@@ -329,7 +348,7 @@ class Magestore_Customercredit_Model_Customercredit extends Mage_Core_Model_Abst
      * @param $message
      * @return $this
      */
-    public function sendNotifytoCustomer($email, $name, $credit_value, $balance, $message)
+    public function sendNotifytoCustomer($email, $name, $credit_value, $bonus_credit_value,  $balance, $bonus_balance, $message)
     {
         $store = Mage::app()->getStore($this->getStoreId());
         $storeurl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
@@ -347,8 +366,10 @@ class Magestore_Customercredit_Model_Customercredit extends Mage_Core_Model_Abst
                 'storeurl' => $storeurl,
                 'receivename' => $name,
                 'value' => $credit_value,
+                'bonus_value' => $bonus_credit_value,
                 'message' => $message,
                 'balance' => $balance,
+                'bonus_balance' => $bonus_balance,
                 'addcredit' => true,
                 )
             );
@@ -359,8 +380,10 @@ class Magestore_Customercredit_Model_Customercredit extends Mage_Core_Model_Abst
                 'storeurl' => $storeurl,
                 'receivename' => $name,
                 'value' => $credit_value,
+                'bonus_value' => $bonus_credit_value,
                 'message' => $message,
                 'balance' => $balance,
+                'bonus_balance' => $bonus_balance,
                 'deductcredit' => true,
                 )
             );
